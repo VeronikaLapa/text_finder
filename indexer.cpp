@@ -69,6 +69,7 @@ std::vector<std::pair<QString, std::set<long int>>> index_dir(QString file_path)
     QFile* file = new QFile(file_path);
     if (file->open(QIODevice::ReadOnly)) {
         res = index_file(file);
+
     }
     delete file;
     if (res.first) {

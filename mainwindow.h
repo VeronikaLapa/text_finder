@@ -5,6 +5,7 @@
 #include <memory>
 #include <QTreeWidget>
 #include <set>
+#include <QFileSystemWatcher>
 
 namespace Ui {
 class MainWindow;
@@ -26,9 +27,10 @@ private slots:
     void index();
     void find();
     void openFileInNotepad(QTreeWidgetItem*);
+    void dir_changed();
 private:
-
-   std::vector<std::pair<QString, std::set<long int>>> indexed_files;
+    QFileSystemWatcher file_watcher;
+    std::vector<std::pair<QString, std::set<long int>>> indexed_files;
     QString crnt_dir;
     std::unique_ptr<Ui::MainWindow> ui;
 };

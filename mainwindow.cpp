@@ -40,9 +40,16 @@ main_window::main_window(QWidget *parent)
     connect(ui->findButton, SIGNAL(clicked()), this, SLOT(find()));
     connect(ui->chooseButton, SIGNAL(clicked()), this, SLOT(index()));
     connect(ui->stringView, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), this, SLOT(openFileInNotepad(QTreeWidgetItem*)));
+    connect(&file_watcher, &QFileSystemWatcher::directoryChanged, this, &main_window::dir_changed);
+
+    ui->status->setText("Choose directory");
     scan_directory(QDir::homePath());
 }
 
+void main_window::dir_changed() {
+    indexed_files.clear();
+    ui->status->setText("Chosen directory was changed. Please, rescan it");
+}
 void main_window::openFileInNotepad(QTreeWidgetItem* item) {
     if (item->childCount() > 0) {
         QProcess *proc = new QProcess(this);
@@ -59,6 +66,7 @@ void concat_sets( std::set<std::pair<QString, std::set<std::pair<size_t,QString>
     res.insert(intermid.begin(), intermid.end());
 }
 void main_window::index() {
+    file_watcher.removePaths(file_watcher.files());
     QList<QTreeWidgetItem *> items = ui->treeWidget->selectedItems();
     QString fullFilePath;
     if (items.size() == 1) {
@@ -69,6 +77,10 @@ void main_window::index() {
     }
     if(QFileInfo(fullFilePath).isDir()) {
         std::vector<QString> files = get_all_files(QDir(fullFilePath));
+        file_watcher.addPath(fullFilePath);
+        for (QString str : files) {
+            file_watcher.addPath(str);
+        }
         QFutureWatcher<std::vector<std::pair<QString, std::set<long int>>>> watcher;
         QProgressDialog dialog;
         dialog.setLabelText(QString("Indexing..."));
@@ -81,9 +93,12 @@ void main_window::index() {
         watcher.waitForFinished();
         if (!watcher.isCanceled()) {
             indexed_files = watcher.result();
+            ui->status->setText("Indexing done");
         } else {
             indexed_files = {};
+            ui->status->setText("Indexing was canceled");
         }
+
     }
 }
 /*
