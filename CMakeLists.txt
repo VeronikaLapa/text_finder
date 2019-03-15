@@ -16,7 +16,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
 
 
-add_executable(text_finder main.cpp mainwindow.h mainwindow.cpp indexer.h indexer.cpp)
+add_executable(text_finder main.cpp mainwindow.h mainwindow.cpp indexer.h indexer.cpp find_function.cpp find_function.h)
 
 #add_subdirectory(tests)
 include_directories(gui)

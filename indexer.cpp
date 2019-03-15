@@ -90,3 +90,4 @@ std::vector<QString> get_all_files(QDir dir) {
     }
     return files;
 }
+
