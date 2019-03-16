@@ -9,7 +9,7 @@ int const BUFFER_SIZE = 1024;
 
 
 
-long int chars_to_trigram(char a, char b,char c) {
+long int chars_to_trigram(unsigned char a, unsigned char b, unsigned char c) {
     return  (a << 16) + (b << 8) + c;
 }
 bool check_utf8(unsigned char a, unsigned char b) {
@@ -39,7 +39,7 @@ std::pair<bool, std::set<long int>> index_file(QFile* file, const std::atomic_bo
         }
         last_buf_size = 2;
         for (int i = 0; i < last_buf_size; ++i) {
-            buffer[i] = buffer[buffLength - last_buf_size - 1 + i];
+            buffer[i] = buffer[buffLength - 1 + i];
         }
     }
     if (!run_st) {
