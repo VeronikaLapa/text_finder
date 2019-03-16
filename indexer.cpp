@@ -39,7 +39,7 @@ std::pair<bool, std::set<long int>> index_file(QFile* file, const std::atomic_bo
         }
         last_buf_size = 2;
         for (int i = 0; i < last_buf_size; ++i) {
-            buffer[i] = buffer[buffLength - 1 + i];
+            buffer[i] = buffer[buffLength + i];
         }
     }
     if (!run_st) {
