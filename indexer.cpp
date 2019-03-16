@@ -7,6 +7,8 @@
 using namespace std;
 int const BUFFER_SIZE = 1024;
 
+
+
 long int chars_to_trigram(char a, char b,char c) {
     return  (a << 16) + (b << 8) + c;
 }
@@ -20,12 +22,12 @@ bool check_utf8(unsigned char a, unsigned char b) {
 
     return false;
 }
-std::pair<bool, std::set<long int>> index_file(QFile* file){ // return (status, trigrams)
+std::pair<bool, std::set<long int>> index_file(QFile* file, const std::atomic_bool &run_st){ // return (status, trigrams)
     std::set<long int> trigrams;
     char buffer[BUFFER_SIZE + 10];
     long long buffLength;
     int last_buf_size = 0;
-    while(!file->atEnd()) {
+    while(!file->atEnd() && run_st) {
         buffLength = file->read(&buffer[last_buf_size], sizeof(buffer));
         for (int i = 0; i < buffLength - 2; ++i) {
             if (!check_utf8(static_cast<unsigned char>(buffer[i]), static_cast<unsigned char>(buffer[i + 1])) ||
@@ -39,6 +41,9 @@ std::pair<bool, std::set<long int>> index_file(QFile* file){ // return (status, 
         for (int i = 0; i < last_buf_size; ++i) {
             buffer[i] = buffer[buffLength - last_buf_size - 1 + i];
         }
+    }
+    if (!run_st) {
+        return {false,{}};
     }
     return {true, trigrams};
 }
@@ -64,11 +69,14 @@ bool check_string(QString& s, std::set<long int>& all_trigrams) {
     std::set<long int> ft = string_to_trigrams(s.toStdString());
     return check_index(ft, all_trigrams);
 }
-std::vector<std::pair<QString, std::set<long int>>> index_dir(QString file_path) {
+
+index_function::index_function(const std::atomic_bool &run_st):run_st(run_st){};
+
+std::vector<std::pair<QString, std::set<long int>>> index_function::operator()(QString file_path) {
     std::pair<bool, std::set<long int>> res = {false, {}};
     QFile* file = new QFile(file_path);
     if (file->open(QIODevice::ReadOnly)) {
-        res = index_file(file);
+        res = index_file(file, run_st);
 
     }
     delete file;
@@ -89,5 +97,11 @@ std::vector<QString> get_all_files(QDir dir) {
         files.push_back(QFile(it.next()).fileName());
     }
     return files;
+}
+
+void concat_list(std::vector<std::pair<QString, std::set<long int>>>& res, std::vector<std::pair<QString, std::set<long int>>> intermid) {
+    for (std::pair<QString, std::set<long int>>& el : intermid) {
+        res.push_back(el);
+    }
 }
 

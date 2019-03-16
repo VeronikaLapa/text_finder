@@ -2,9 +2,7 @@
 #include "indexer.h"
 
 #include <QTextStream>
-find_function::find_function(QString text) {
-    this->text = text;
-}
+find_function::find_function(const QString& text, const std::atomic_bool &run_st) : text(text), run_st(run_st){}
 
 std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>> find_function::operator() (std::pair<QString, std::set<long int>> file) {
     std::string t = text.toStdString();
@@ -15,7 +13,7 @@ std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>> find_function:
         {
            QTextStream in(&inputFile);
            size_t line_num = 0;
-           while (!in.atEnd()) {
+           while (!in.atEnd() && run_st) {
               ++line_num;
               QString line = in.readLine();
               if (line.toStdString().find(t) != std::string::npos) {
@@ -31,4 +29,7 @@ std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>> find_function:
         }
     }
     return {};
+}
+void concat_sets( std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>>& res, const std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>> intermid) {
+    res.insert(intermid.begin(), intermid.end());
 }

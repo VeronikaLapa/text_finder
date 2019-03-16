@@ -28,11 +28,15 @@ private slots:
     void find();
     void openFileInNotepad(QTreeWidgetItem*);
     void dir_changed();
+    void find_cancel();
+    void index_cancel();
 private:
     QFileSystemWatcher file_watcher;
     std::vector<std::pair<QString, std::set<long int>>> indexed_files;
     QString crnt_dir;
     std::unique_ptr<Ui::MainWindow> ui;
+    std::atomic_bool find_st;
+    std::atomic_bool index_st;
 };
 
 #endif // MAINWINDOW_H

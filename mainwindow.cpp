@@ -57,15 +57,9 @@ void main_window::openFileInNotepad(QTreeWidgetItem* item) {
         proc->start("notepad.exe " +  (item->data(0, Qt::UserRole)).toString());
     }
 }
-void concat_list(std::vector<std::pair<QString, std::set<long int>>>& res, std::vector<std::pair<QString, std::set<long int>>> intermid) {
-    for (std::pair<QString, std::set<long int>>& el : intermid) {
-        res.push_back(el);
-    }
-}
 
-void concat_sets( std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>>& res, const std::set<std::pair<QString, std::set<std::pair<size_t,QString>>>> intermid) {
-    res.insert(intermid.begin(), intermid.end());
-}
+
+
 void main_window::index() {
     file_watcher.removePaths(file_watcher.files());
     QList<QTreeWidgetItem *> items = ui->treeWidget->selectedItems();
@@ -86,13 +80,16 @@ void main_window::index() {
         QProgressDialog dialog;
         dialog.setLabelText(QString("Indexing..."));
         connect(&watcher, SIGNAL(finished()), &dialog, SLOT(reset()));
-        connect(&dialog, SIGNAL(canceled()), &watcher, SLOT(cancel()));
+        connect(&dialog, SIGNAL(canceled()), this, SLOT(index_cancel()));
         connect(&watcher, SIGNAL(progressRangeChanged(int, int)), &dialog, SLOT(setRange(int, int)));
         connect(&watcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
-        watcher.setFuture(QtConcurrent::mappedReduced(files, index_dir, concat_list));
+        index_st = true;
+        index_function indf(std::ref(index_st));
+        watcher.setFuture(QtConcurrent::mappedReduced(files, indf, concat_list));
         dialog.exec();
         watcher.waitForFinished();
-        if (!watcher.isCanceled()) {
+        if (index_st) {
+            index_st = false;
             indexed_files = watcher.result();
             ui->status->setText("Indexing done");
         } else {
@@ -100,6 +97,12 @@ void main_window::index() {
             ui->status->setText("Indexing was canceled");
         }
 
+    }
+}
+
+void main_window::index_cancel() {
+    if (index_st) {
+        index_st = false;
     }
 }
 /*
@@ -134,14 +137,16 @@ void main_window::find() {
         QProgressDialog dialog;
         dialog.setLabelText(QString("Finding..."));
         connect(&watcher, SIGNAL(finished()), &dialog, SLOT(reset()));
-        connect(&dialog, SIGNAL(canceled()), &watcher, SLOT(cancel()));
+        connect(&dialog, SIGNAL(canceled()), this, SLOT(find_cancel()));
         connect(&watcher, SIGNAL(progressRangeChanged(int, int)), &dialog, SLOT(setRange(int, int)));
         connect(&watcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
-        find_function ff(text);
+        find_st = true;
+        find_function ff(text, std::ref(find_st));
         watcher.setFuture(QtConcurrent::mappedReduced(indexed_files, ff, concat_sets));
         dialog.exec();
         watcher.waitForFinished();
-        if (!watcher.isCanceled()) {
+        if (find_st) {
+            find_st = false;
             for (std::pair<QString, std::set<std::pair<size_t,QString>>> file_info : watcher.result()) {
                 QFileInfo crnt_file(file_info.first);
                 QTreeWidgetItem* parent_item = new QTreeWidgetItem(ui->stringView);
@@ -159,7 +164,11 @@ void main_window::find() {
     }
 }
 
-
+void main_window::find_cancel() {
+    if (find_st) {
+        find_st = false;
+    }
+}
 
 void main_window::onTreeItemClicked(QTreeWidgetItem* item) {
     QVariant file = item->data(0,Qt::UserRole);
