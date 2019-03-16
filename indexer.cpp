@@ -28,7 +28,7 @@ std::pair<bool, std::set<long int>> index_file(QFile* file, const std::atomic_bo
     long long buffLength;
     int last_buf_size = 0;
     while(!file->atEnd() && run_st) {
-        buffLength = file->read(&buffer[last_buf_size], sizeof(buffer));
+        buffLength = file->read(&buffer[last_buf_size], sizeof(buffer) - last_buf_size);
         for (int i = 0; i < buffLength - 2; ++i) {
             if (!check_utf8(static_cast<unsigned char>(buffer[i]), static_cast<unsigned char>(buffer[i + 1])) ||
                     !check_utf8(static_cast<unsigned char>(buffer[i+1]), static_cast<unsigned char>(buffer[i + 2]))) {
