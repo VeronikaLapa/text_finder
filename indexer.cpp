@@ -37,10 +37,12 @@ std::pair<bool, std::set<long int>> index_file(QFile* file, const std::atomic_bo
             long int trig = chars_to_trigram(buffer[i], buffer[i+1], buffer[i+2]);
             trigrams.insert(trig);
         }
-        last_buf_size = 2;
-        for (int i = 0; i < last_buf_size; ++i) {
-            buffer[i] = buffer[buffLength + i];
+        if (buffLength > 3) {
+            for (int i = 0; i < 2; ++i) {
+                buffer[i] = buffer[buffLength - 2 + i];
+            }
         }
+        last_buf_size = 2;
     }
     if (!run_st) {
         return {false,{}};
